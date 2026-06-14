@@ -6,6 +6,7 @@ import { ArrowRight, BookMarked, ClipboardList, Play, Route } from "lucide-react
 import { AppFrame, ProgressBar } from "@/components/AppFrame";
 import { SourceBadge } from "@/components/SourceBadge";
 import { class6Subjects, type SubjectId } from "@/features/biology/content";
+import { MentalMathQuiz } from "@/features/math/MentalMathQuiz";
 import { getLatestAttempt, getMasteryForChapter, readProgress, type StudyProgress } from "@/lib/progress";
 
 export default function ChaptersPage() {
@@ -112,6 +113,8 @@ export default function ChaptersPage() {
             })}
           </div>
         </section>
+
+        {selectedSubjectId === "maths" ? <MentalMathQuiz /> : null}
 
         <section className="mt-5 grid gap-4">
           {selectedSubject.chapters.map((chapter) => {

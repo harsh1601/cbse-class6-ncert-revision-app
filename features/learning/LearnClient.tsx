@@ -8,6 +8,7 @@ import { AppFrame } from "@/components/AppFrame";
 import { SourceBadge } from "@/components/SourceBadge";
 import { TopicGame } from "@/components/TopicGame";
 import { allChapters, class6Subjects, getQuestionPapers, type Chapter } from "@/features/biology/content";
+import { MentalMathQuiz } from "@/features/math/MentalMathQuiz";
 import { markLessonComplete, readProfile, readProgress } from "@/lib/progress";
 
 export function LearnClient({ chapter }: { chapter: Chapter }) {
@@ -158,6 +159,8 @@ export function LearnClient({ chapter }: { chapter: Chapter }) {
             </div>
           </div>
         </section>
+
+        {chapter.subjectId === "maths" ? <MentalMathQuiz /> : null}
 
         <div className="mt-6">
           <TopicGame chapter={chapter} />

@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Check, Clock, GraduationCap } from "lucide-react";
-import { LogoOptions } from "@/components/LogoOptions";
 import { SourceBadge } from "@/components/SourceBadge";
 import { class6Subjects, type ExamGoal } from "@/features/biology/content";
 import { saveProfile } from "@/lib/progress";
@@ -80,8 +79,6 @@ export default function SetupPage() {
               <SourceBadge sourceRefIds={["ncert-service", "ncert-science", "ncert-maths", "ncert-sst"]} />
             </div>
           </section>
-
-          <LogoOptions />
         </div>
 
         <form onSubmit={startPlan} className="rounded-lg border border-stone-200 bg-white p-6 shadow-soft">
