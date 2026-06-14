@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ClipboardList, FileText, Home, LineChart, Map, MessageCircleQuestion } from "lucide-react";
+import { VisitorCounter } from "@/components/VisitorCounter";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -29,25 +30,28 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary navigation">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href;
+          <div className="hidden items-center gap-2 sm:flex">
+            <VisitorCounter />
+            <nav className="flex items-center gap-1" aria-label="Primary navigation">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.href;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition ${
-                    active ? "bg-gradient-to-r from-lagoon to-moss text-white" : "text-stone-700 hover:bg-sky-50"
-                  }`}
-                >
-                  <Icon size={16} aria-hidden="true" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition ${
+                      active ? "bg-gradient-to-r from-lagoon to-moss text-white" : "text-stone-700 hover:bg-sky-50"
+                    }`}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         </div>
       </header>
 

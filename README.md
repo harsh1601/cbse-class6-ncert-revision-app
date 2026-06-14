@@ -29,6 +29,8 @@ Copy `.env.example` to `.env.local`.
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 
 AI_TUTOR_API_URL=
 AI_TUTOR_API_KEY=
@@ -39,9 +41,11 @@ The Chat Tutor works without AI credentials by using the built-in Class 6 fallba
 
 ## Supabase
 
-The database schema is in `supabase/migrations/202606140001_class6_revision_schema.sql`.
+The database schema is in `supabase/migrations/`.
 
 The current UI stores progress in browser localStorage, while Supabase is prepared for future authenticated sync of student profiles, attempts, and chat sessions.
+
+The visitor counter and private visitor audit trail require the server-only `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables. The service role key is used only in server API routes and must never be exposed to the browser.
 
 ## Deployment
 
