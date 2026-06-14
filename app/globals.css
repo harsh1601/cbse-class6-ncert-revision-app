@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(239, 246, 255, 0.96)),
+    repeating-linear-gradient(90deg, rgba(14, 165, 233, 0.06) 0, rgba(14, 165, 233, 0.06) 1px, transparent 1px, transparent 30px),
+    repeating-linear-gradient(0deg, rgba(245, 158, 11, 0.05) 0, rgba(245, 158, 11, 0.05) 1px, transparent 1px, transparent 30px);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.svg-label {
+  fill: #17201c;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.cell-pulse {
+  animation: cellPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cellPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    transform-origin: center;
+    opacity: 0.82;
+  }
+  50% {
+    transform: scale(1.16);
+    transform-origin: center;
+    opacity: 1;
+  }
+}
+
+.focus-ring {
+  outline: 3px solid rgba(39, 118, 138, 0.35);
+  outline-offset: 2px;
+}
