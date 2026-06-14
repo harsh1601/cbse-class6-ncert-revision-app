@@ -1,119 +1,62 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Brain, CheckCircle2, RotateCcw, Sparkles, XCircle } from "lucide-react";
+import { mentalMathQuestionBank, type MentalMathDifficulty, type MentalMathQuestion } from "./mentalMathBank";
 
-type MentalMathQuestion = {
-  id: string;
-  prompt: string;
-  answer: number;
-  options: number[];
-  hint: string;
+const difficultyOrder: MentalMathDifficulty[] = ["easy", "medium", "hard"];
+const questionsPerDifficulty = 5;
+
+const difficultyStyles: Record<MentalMathDifficulty, string> = {
+  easy: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  medium: "border-amber-200 bg-amber-50 text-amber-700",
+  hard: "border-coral/25 bg-coral/10 text-coral",
 };
 
-function rotate<T>(items: T[], offset: number) {
-  return items.map((_, index) => items[(index + offset) % items.length]);
+function shuffle<T>(items: T[]) {
+  return [...items]
+    .map((item) => ({ item, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
 }
 
-function uniqueOptions(answer: number, nearby: number[], seed: number) {
-  const values = [answer, ...nearby].filter((value, index, items) => Number.isFinite(value) && value >= 0 && items.indexOf(value) === index).slice(0, 4);
-  let filler = answer + seed + 2;
+function buildQuizQuestions() {
+  const groupedQuestions = difficultyOrder.flatMap((difficulty) =>
+    shuffle(mentalMathQuestionBank.filter((question) => question.difficulty === difficulty)).slice(0, questionsPerDifficulty),
+  );
 
-  while (values.length < 4) {
-    if (!values.includes(filler)) {
-      values.push(filler);
-    }
-    filler += 3;
-  }
-
-  return rotate(values, seed % values.length);
+  return shuffle(groupedQuestions);
 }
 
-function makeQuestion(index: number): MentalMathQuestion {
-  const seed = index + 1;
-  const a = 8 + seed * 3;
-  const b = 5 + seed * 2;
-  const c = 10 + seed;
-
-  if (index % 6 === 0) {
-    const answer = a + b + c;
-    return {
-      id: `mental-add-${seed}`,
-      prompt: `${a} + ${b} + ${c} = ?`,
-      answer,
-      options: uniqueOptions(answer, [answer - 5, answer + 4, answer + 9], seed),
-      hint: "Add the easiest pair first, then add the remaining number.",
-    };
-  }
-
-  if (index % 6 === 1) {
-    const answer = (seed + 4) * 9;
-    return {
-      id: `mental-table-${seed}`,
-      prompt: `${seed + 4} x 9 = ?`,
-      answer,
-      options: uniqueOptions(answer, [answer - 9, answer + 9, answer + 3], seed),
-      hint: "For 9 times, multiply by 10 and subtract the number once.",
-    };
-  }
-
-  if (index % 6 === 2) {
-    const total = 100;
-    const used = 17 + seed * 4;
-    const answer = total - used;
-    return {
-      id: `mental-hundred-${seed}`,
-      prompt: `100 - ${used} = ?`,
-      answer,
-      options: uniqueOptions(answer, [answer - 10, answer + 10, answer + 1], seed),
-      hint: "Think how much more is needed to reach 100.",
-    };
-  }
-
-  if (index % 6 === 3) {
-    const answer = (seed + 5) * 2 + 10;
-    return {
-      id: `mental-double-${seed}`,
-      prompt: `Double ${seed + 5}, then add 10. What do you get?`,
-      answer,
-      options: uniqueOptions(answer, [answer - 2, answer + 4, answer + 10], seed),
-      hint: "Double means multiply by 2.",
-    };
-  }
-
-  if (index % 6 === 4) {
-    const answer = 25 * (seed + 2);
-    return {
-      id: `mental-quarters-${seed}`,
-      prompt: `${seed + 2} groups of 25 = ?`,
-      answer,
-      options: uniqueOptions(answer, [answer - 25, answer + 25, answer + 10], seed),
-      hint: "Four groups of 25 make 100.",
-    };
-  }
-
-  const answer = (seed + 3) * 5;
-  return {
-    id: `mental-five-${seed}`,
-    prompt: `${seed + 3} x 5 = ?`,
-    answer,
-    options: uniqueOptions(answer, [answer - 5, answer + 5, answer + 15], seed),
-    hint: "Multiply by 10, then take half.",
-  };
+function buildStarterQuestions() {
+  return difficultyOrder.flatMap((difficulty) =>
+    mentalMathQuestionBank.filter((question) => question.difficulty === difficulty).slice(0, questionsPerDifficulty),
+  );
 }
-
-const questions = Array.from({ length: 10 }, (_, index) => makeQuestion(index));
 
 export function MentalMathQuiz() {
+  const [questions, setQuestions] = useState<MentalMathQuestion[]>(() => buildStarterQuestions());
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showHints, setShowHints] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    setQuestions(buildQuizQuestions());
+  }, []);
 
   const score = useMemo(
     () => questions.filter((question) => answers[question.id] === question.answer).length,
     [answers],
   );
   const answeredCount = Object.keys(answers).length;
+  const difficultyCounts = useMemo(
+    () =>
+      difficultyOrder.map((difficulty) => ({
+        difficulty,
+        count: questions.filter((question) => question.difficulty === difficulty).length,
+      })),
+    [questions],
+  );
 
   function choose(question: MentalMathQuestion, option: number) {
     if (submitted) {
@@ -124,6 +67,7 @@ export function MentalMathQuiz() {
   }
 
   function resetQuiz() {
+    setQuestions(buildQuizQuestions());
     setAnswers({});
     setShowHints({});
     setSubmitted(false);
@@ -140,14 +84,26 @@ export function MentalMathQuiz() {
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-moss">Mental Math</p>
             <h2 className="mt-1 text-2xl font-bold">Quick calculation quiz</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-              Practice fast Maths without writing long steps. Choose the answer in your head, then check your score.
+              Practice 15 random questions from a 120-question bank covering CBSE Class 6 Maths topics.
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {difficultyCounts.map(({ difficulty, count }) => (
+                <span
+                  key={difficulty}
+                  className={`rounded-md border px-2 py-1 text-xs font-black uppercase tracking-[0.12em] ${difficultyStyles[difficulty]}`}
+                >
+                  {count} {difficulty}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="rounded-md bg-white px-4 py-3 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Score</p>
-          <p className="mt-1 text-2xl font-black text-ink">{submitted ? `${score}/10` : `${answeredCount}/10`}</p>
+          <p className="mt-1 text-2xl font-black text-ink">
+            {submitted ? `${score}/${questions.length}` : `${answeredCount}/${questions.length}`}
+          </p>
         </div>
       </div>
 
@@ -162,6 +118,12 @@ export function MentalMathQuiz() {
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-stone-500">Q{index + 1}</p>
                   <h3 className="mt-1 text-lg font-bold">{question.prompt}</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className={`rounded-md border px-2 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${difficultyStyles[question.difficulty]}`}>
+                      {question.difficulty}
+                    </span>
+                    <span className="rounded-md border border-sky-100 bg-sky-50 px-2 py-1 text-[11px] font-bold text-sky-700">{question.topic}</span>
+                  </div>
                 </div>
                 {submitted ? (
                   <span className={`flex h-8 w-8 items-center justify-center rounded-md ${correct ? "bg-moss text-white" : "bg-coral text-white"}`}>
@@ -219,10 +181,9 @@ export function MentalMathQuiz() {
           className="inline-flex items-center gap-2 rounded-md border border-stone-300 bg-white px-4 py-3 text-sm font-bold text-stone-700 transition hover:border-coral"
         >
           <RotateCcw size={16} aria-hidden="true" />
-          Try again
+          New random quiz
         </button>
       </div>
     </section>
   );
 }
-
