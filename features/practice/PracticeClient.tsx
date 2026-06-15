@@ -8,6 +8,7 @@ import { AppFrame } from "@/components/AppFrame";
 import { SourceBadge } from "@/components/SourceBadge";
 import { getQuestionPapers, type Chapter, type FillBlankQuestion, type McqQuestion, type QuestionPaper, type TrueFalseQuestion, type WrittenQuestion } from "@/features/biology/content";
 import { downloadMixedSamplePaperPdf } from "@/features/practice/pdf";
+import { SpeechToTextButton } from "@/features/practice/SpeechToTextButton";
 import {
   clearPracticeDraft,
   getAttemptPercent,
@@ -105,6 +106,10 @@ function formatDraftTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function appendTranscript(answer: string, transcript: string) {
+  return [answer.trim(), transcript.trim()].filter(Boolean).join(" ");
 }
 
 export function PracticeClient({ chapter }: { chapter: Chapter }) {
@@ -635,8 +640,14 @@ function BlankPanel({ question, index, answer, submitted, onAnswer }: { question
           onChange={(event) => onAnswer(event.target.value)}
           className="mt-3 w-full rounded-md border border-stone-300 bg-white px-3 py-3 text-sm font-semibold outline-none transition focus:border-lagoon focus:ring-4 focus:ring-lagoon/15"
           placeholder="Type the missing word"
+          disabled={submitted}
         />
       </label>
+      {!submitted ? (
+        <div className="mt-3">
+          <SpeechToTextButton onTranscript={onAnswer} />
+        </div>
+      ) : null}
       {submitted ? <Feedback correct={correct}>Answer: {question.correctAnswer}. {question.explanation}</Feedback> : null}
     </div>
   );
@@ -678,11 +689,14 @@ function WrittenPanel({
         rows={rows}
         className="mt-3 w-full rounded-md border border-stone-300 bg-white px-3 py-3 text-sm outline-none transition focus:border-lagoon focus:ring-4 focus:ring-lagoon/15"
         placeholder={placeholder}
+        disabled={submitted}
       />
       <div className="mt-3 flex flex-wrap gap-2">
+        {!submitted ? <SpeechToTextButton onTranscript={(transcript) => onAnswer(appendTranscript(answer, transcript))} /> : null}
         <button
           type="button"
           onClick={() => onConfidence("included")}
+          disabled={submitted}
           className={`rounded-md border px-3 py-2 text-sm font-bold ${
             confidence === "included" ? "border-moss bg-moss text-white" : "border-stone-300 bg-white text-stone-700 hover:border-moss"
           }`}
@@ -692,6 +706,7 @@ function WrittenPanel({
         <button
           type="button"
           onClick={() => onConfidence("needs-revision")}
+          disabled={submitted}
           className={`rounded-md border px-3 py-2 text-sm font-bold ${
             confidence === "needs-revision" ? "border-coral bg-coral text-white" : "border-stone-300 bg-white text-stone-700 hover:border-coral"
           }`}
