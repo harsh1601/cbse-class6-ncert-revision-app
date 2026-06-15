@@ -1,4 +1,5 @@
 import type { ChatTutorContext, ChatTutorMessage } from "@/features/chat/types";
+import { allChapters } from "@/features/biology/content";
 
 type TopicAnswer = {
   topic: string;
@@ -177,6 +178,82 @@ Try this:
 Can you tell me the exact word or step that is confusing?`;
 }
 
+function contentWords(value: string) {
+  return normalize(value)
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+}
+
+function trueFalseStatement(question: string) {
+  const cleaned = question
+    .replace(/\b(true\s*\/\s*false|true\s+or\s+false|is\s+this\s+true|is\s+this\s+false)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[?.!]+$/g, "");
+
+  return cleaned || question.trim();
+}
+
+function findTermForStatement(statement: string, context?: ChatTutorContext) {
+  const normalizedStatement = normalize(statement);
+  const chapters = context?.chapterTitle
+    ? allChapters.filter((chapter) => normalize(chapter.title) === normalize(context.chapterTitle ?? ""))
+    : allChapters;
+
+  return chapters
+    .flatMap((chapter) => chapter.terms.map((term) => ({ chapter, term })))
+    .find(({ term }) => normalizedStatement.includes(normalize(term.term)));
+}
+
+function answerTrueFalseQuestion(question: string, context?: ChatTutorContext) {
+  const normalized = normalize(question);
+  const isTrueFalse = /\b(true\s*false|true\s+or\s+false|truefalse|is\s+this\s+true|is\s+this\s+false)\b/.test(normalized);
+
+  if (!isTrueFalse) {
+    return null;
+  }
+
+  const statement = trueFalseStatement(question);
+  const matched = findTermForStatement(statement, context);
+
+  if (!matched) {
+    return `Good question!
+
+Answer:
+I need the exact chapter idea to be fully sure.
+
+Explanation:
+For true or false questions, first underline the main word. Then check whether the sentence matches the definition from your chapter.
+
+Try this:
+Send the statement with the chapter name, and I will mark it True or False.`;
+  }
+
+  const statementWords = new Set(contentWords(statement));
+  const meaningWords = contentWords(matched.term.meaning);
+  const matchedMeaningWords = meaningWords.filter((word) => statementWords.has(word));
+  const isLikelyTrue = matchedMeaningWords.length >= Math.min(2, meaningWords.length);
+
+  return `Good question!
+
+Answer:
+${isLikelyTrue ? "True" : "False"}
+
+Explanation:
+${matched.term.term} means ${matched.term.meaning}. The statement says: "${statement}".
+
+Example:
+${matched.term.example}
+
+Remember:
+- Read the main word carefully.
+- Compare the sentence with the chapter definition.
+- If the meaning matches, the answer is True.
+
+Try this:
+Write one more sentence using "${matched.term.term}".`;
+}
+
 export function shouldRedirectToStudies(question: string) {
   const normalized = normalize(question);
   const hasStudyWord = studyWords.some((word) => normalized.includes(word));
@@ -202,6 +279,12 @@ export function createMockTutorAnswer(messages: ChatTutorMessage[], context?: Ch
     return "I am here to help you with your studies. Please ask me a subject-related question from Maths, Science, English, Hindi, SST, or revision topics.";
   }
 
+  const trueFalseAnswer = answerTrueFalseQuestion(currentQuestion, context);
+
+  if (trueFalseAnswer) {
+    return trueFalseAnswer;
+  }
+
   const questionForTopic = isFollowUp(currentQuestion) ? previousStudentQuestion(messages.slice(0, -1)) ?? currentQuestion : currentQuestion;
   const answer = findAnswer(questionForTopic, context);
 
@@ -211,4 +294,3 @@ export function createMockTutorAnswer(messages: ChatTutorMessage[], context?: Ch
 
   return generalStudyAnswer(currentQuestion, context);
 }
-
